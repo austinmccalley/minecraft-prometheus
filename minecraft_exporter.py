@@ -16,7 +16,6 @@ class MinecraftCollector(object):
     def __init__(self):
         self.stats_directory = "/world/stats"
         self.player_directory = "/world/playerdata"
-        self.advancements_directory = "/world/advancements"
         self.better_questing = "/world/betterquesting"
         self.player_map = dict()
         self.quests_enabled = False
@@ -185,15 +184,6 @@ class MinecraftCollector(object):
         data["stat.Score"] = nbtfile.get("Score").value
         data["stat.Health"] = nbtfile.get("Health").value
         data["stat.foodLevel"] = nbtfile.get("foodLevel").value
-        with open(self.advancements_directory + "/" + uuid + ".json") as json_file:
-            count = 0
-            advancements = json.load(json_file)
-            for key, value in advancements.items():
-                if key in ("DataVersion"):
-                    continue
-                if value["done"] == True:
-                    count += 1
-        data["stat.advancements"] = count
         if self.quests_enabled:
             data["stat.questsFinished"] = self.get_player_quests_finished(uuid)
         return data
@@ -220,7 +210,6 @@ class MinecraftCollector(object):
         damage_dealt = Metric('damage_dealt', "Damage dealt by Player", "counter")
         blocks_crafted = Metric('blocks_crafted', "Items a Player crafted", "counter")
         player_playtime = Metric('player_playtime', "Time in Minutes a Player was online", "counter")
-        player_advancements = Metric('player_advancements', "Number of completed advances of a player", "counter")
         player_slept = Metric('player_slept', "Times a Player slept in a bed", "counter")
         player_quests_finished = Metric('player_quests_finished', 'Number of quests a Player has finished', 'counter')
         player_used_crafting_table = Metric('player_used_crafting_table', "Times a Player used a Crafting Table",
@@ -285,8 +274,6 @@ class MinecraftCollector(object):
                     (key.split(".")[2], key.split(".")[3]))})
             elif stat == "playOneMinute":
                 player_playtime.add_sample('player_playtime', value=value, labels={'player': name})
-            elif stat == "advancements":
-                player_advancements.add_sample('player_advancements', value=value, labels={'player': name})
             elif stat == "sleepInBed":
                 player_slept.add_sample('player_slept', value=value, labels={'player': name})
             elif stat == "craftingTableInteraction":
@@ -353,7 +340,7 @@ class MinecraftCollector(object):
                     mc_custom.add_sample('mc_custom', value=value, labels={'stat': stat})
         return [blocks_mined, blocks_picked_up, player_deaths, player_jumps, cm_traveled, player_xp_total,
                 player_current_level, player_food_level, player_health, player_score, entities_killed, damage_taken,
-                damage_dealt, blocks_crafted, player_playtime, player_advancements, player_slept,
+                damage_dealt, blocks_crafted, player_playtime, player_slept,
                 player_used_crafting_table, player_quests_finished, mc_custom]
 
     def collect(self):
