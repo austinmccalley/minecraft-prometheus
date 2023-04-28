@@ -11,12 +11,13 @@ import schedule
 from mcrcon import MCRcon, MCRconException
 from prometheus_client import Metric, REGISTRY, start_http_server
 
+isTesting = True
 
 class MinecraftCollector(object):
     def __init__(self):
-        self.stats_directory = "/world/stats"
-        self.player_directory = "/world/playerdata"
-        self.better_questing = "/world/betterquesting"
+        self.stats_directory = "/world/stats" if not isTesting else 'E:\\code\\minecraft-prometheus\\world\\stats'
+        self.player_directory = "/world/playerdata" if not isTesting else 'E:\\code\\minecraft-prometheus\\world\\playerdata'
+        self.better_questing = "/world/betterquesting" if not isTesting else 'E:\\code\\minecraft-prometheus\\world\\betterquesting'
         self.player_map = dict()
         self.quests_enabled = False
 
@@ -28,8 +29,6 @@ class MinecraftCollector(object):
 
         if os.path.isdir(self.better_questing):
             self.quests_enabled = True
-
-        print(os.listdir('/world'))
 
         schedule.every().day.at("01:00").do(self.flush_playernamecache)
 
@@ -171,6 +170,16 @@ class MinecraftCollector(object):
             json_file.close()
         counter = 0
         for _, value in data['questProgress:9'].items():
+            # Check that 'tasks:9' exists
+            if 'tasks:9' not in value:
+                continue
+            # Check that '0:10' exists
+            if '0:10' not in value['tasks:9']:
+                continue
+            # Check that 'completeUsers:9' exists
+            if 'completeUsers:9' not in value['tasks:9']['0:10']:
+                continue
+            
             for _, u in value['tasks:9']['0:10']['completeUsers:9'].items():
                 if u == uuid:
                     counter += 1
@@ -220,10 +229,10 @@ class MinecraftCollector(object):
         for key, value in data.items():  # pre 1.15
             if key in ("stats", "DataVersion"):
                 continue
-            stat = key.split(".")[1]  # entityKilledBy
+            stat = key.split(".")[-1]  # entityKilledBy
             if stat == "mineBlock":
                 blocks_mined.add_sample("blocks_mined", value=value, labels={'player': name, 'block': '.'.join(
-                    (key.split(".")[2], key.split(".")[3]))})
+                    (key.split(".")[1], key.split(".")[2]))})
             elif stat == "pickup":
                 blocks_picked_up.add_sample("blocks_picked_up", value=value, labels={'player': name, 'block': '.'.join(
                     (key.split(".")[2], key.split(".")[3]))})
@@ -273,7 +282,7 @@ class MinecraftCollector(object):
                 damage_dealt.add_sample('damage_taken', value=value, labels={'player': name})
             elif stat == "craftItem":
                 blocks_crafted.add_sample('blocks_crafted', value=value, labels={'player': name, 'block': '.'.join(
-                    (key.split(".")[2], key.split(".")[3]))})
+                    (key.split(".")[1], key.split(".")[2]))})
             elif stat == "playOneMinute":
                 player_playtime.add_sample('player_playtime', value=value, labels={'player': name})
             elif stat == "sleepInBed":
