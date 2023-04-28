@@ -29,6 +29,8 @@ class MinecraftCollector(object):
         if os.path.isdir(self.better_questing):
             self.quests_enabled = True
 
+        print(os.path('/world'))
+
         schedule.every().day.at("01:00").do(self.flush_playernamecache)
 
     def get_players(self):
