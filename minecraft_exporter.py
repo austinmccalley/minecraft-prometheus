@@ -11,7 +11,7 @@ import schedule
 from mcrcon import MCRcon, MCRconException
 from prometheus_client import Metric, REGISTRY, start_http_server
 
-isTesting = False
+isTesting = True
 
 class MinecraftCollector(object):
     def __init__(self):
@@ -23,9 +23,10 @@ class MinecraftCollector(object):
 
         self.rcon = None
         self.rcon_connected = False
-        if all(x in os.environ for x in ['RCON_HOST', 'RCON_PASSWORD']):
-            self.rcon = MCRcon(os.environ['RCON_HOST'], os.environ['RCON_PASSWORD'], port=int(os.environ['RCON_PORT']))
-            print("RCON is enabled for " + os.environ['RCON_HOST'])
+        if True:
+            # self.rcon = MCRcon(os.environ['RCON_HOST'], os.environ['RCON_PASSWORD'], port=int(os.environ['RCON_PORT']))
+            self.rcon = MCRcon('192.168.254.42', 'Password', port=25575)
+            print("RCON is enabled for " + '192.168.254.42')
 
         if os.path.isdir(self.better_questing):
             self.quests_enabled = True
@@ -229,8 +230,18 @@ class MinecraftCollector(object):
         for key, value in data.items():  # pre 1.15
             if key in ("stats", "DataVersion"):
                 continue
-            stat = key.split(".")[-1]  # entityKilledBy
-            if stat == "mineBlock":
+
+            # Check if the key can be split
+            if '.' not in key:
+                stat = key
+            elif len(key.split(".")) == 2:
+                stat = key.split(".")[1]
+            else:
+                stat = key.split(".")[-1]
+
+
+            if "mineBlock" in key:
+
                 blocks_mined.add_sample("blocks_mined", value=value, labels={'player': name, 'block': '.'.join(
                     (key.split(".")[1], key.split(".")[2]))})
             elif stat == "pickup":
