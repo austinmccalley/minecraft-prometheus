@@ -166,7 +166,7 @@ class MinecraftCollector(object):
         return metrics
 
     def get_player_quests_finished(self, uuid):
-        with open(self.better_questing + "/QuestProgress.json") as json_file:
+        with open(self.better_questing + "QuestProgress/" + uuid + ".json") as json_file:
             data = json.load(json_file)
             json_file.close()
         counter = 0
