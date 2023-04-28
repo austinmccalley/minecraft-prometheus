@@ -11,7 +11,7 @@ import schedule
 from mcrcon import MCRcon, MCRconException
 from prometheus_client import Metric, REGISTRY, start_http_server
 
-isTesting = True
+isTesting = False
 
 class MinecraftCollector(object):
     def __init__(self):
